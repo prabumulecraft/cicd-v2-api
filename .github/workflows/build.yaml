@@ -11,7 +11,7 @@ on:
 
 jobs:
   Publish_to_Exchange:
-    if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.set_version.outputs.new_version }}
@@ -21,29 +21,21 @@ jobs:
         with:
           token: ${{ secrets.GIT_HUB_TOKEN }}
 
-      - name: Increment Version (Only on dev branch)
+      - name: Increment Version
         id: set_version
         run: |
-          BRANCH_NAME="${{ github.event.pull_request.base.ref }}"
-          echo "Branch name: $BRANCH_NAME"
-
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "Current Version: $CURRENT_VERSION"
 
-          if [ "$BRANCH_NAME" == "dev" ]; then
-            BASE_VERSION=$(echo "$CURRENT_VERSION" | cut -d'-' -f1)
-            PATCH_VERSION=$(echo "$BASE_VERSION" | awk -F. -v OFS=. '{$NF += 1 ; print}')
-            NEW_VERSION="$PATCH_VERSION"
-            echo "New Version: $NEW_VERSION"
+          BASE_VERSION=$(echo "$CURRENT_VERSION" | cut -d'-' -f1)
+          PATCH_VERSION=$(echo "$BASE_VERSION" | awk -F. -v OFS=. '{$NF += 1 ; print}')
+          NEW_VERSION="$PATCH_VERSION"
+          echo "New Version: $NEW_VERSION"
 
-            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-            mvn versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
-          else
-            echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          fi
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          mvn versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
 
-      - name: Commit and Push Updated Version (Only on dev)
-        if: github.event.pull_request.base.ref == 'dev'
+      - name: Commit and Push Updated Version
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -97,7 +89,6 @@ jobs:
 
   Deploy_to_UAT:
     if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'qa'
-    needs: Publish_to_Exchange
     runs-on: ubuntu-latest
     environment: uat
     steps:
@@ -126,7 +117,6 @@ jobs:
 
   Deploy_to_PROD:
     if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
-    needs: Publish_to_Exchange
     runs-on: ubuntu-latest
     environment: prod
     steps:
