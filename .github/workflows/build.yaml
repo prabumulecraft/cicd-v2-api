@@ -1,0 +1,144 @@
+name: Publish and Deploy Pipeline
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - dev
+      - qa
+      - main
+
+jobs:
+  Publish_to_Exchange:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev'
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.set_version.outputs.new_version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_HUB_TOKEN }}
+
+      - name: Increment Version
+        id: set_version
+        run: |
+          CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Current Version: $CURRENT_VERSION"
+
+          BASE_VERSION=$(echo "$CURRENT_VERSION" | cut -d'-' -f1)
+          PATCH_VERSION=$(echo "$BASE_VERSION" | awk -F. -v OFS=. '{$NF += 1 ; print}')
+          NEW_VERSION="$PATCH_VERSION"
+          echo "New Version: $NEW_VERSION"
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          mvn versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
+
+      - name: Commit and Push Updated Version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME="${{ github.event.pull_request.base.ref }}"
+          git checkout $BRANCH_NAME
+          git pull origin $BRANCH_NAME
+          git commit -am "chore: Increment POM version to ${{ steps.set_version.outputs.new_version }}"
+          git push origin $BRANCH_NAME
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: 17
+
+      - name: Publish to Exchange
+        run: |
+          echo "Publishing version ${{ steps.set_version.outputs.new_version }}"
+          mvn clean deploy --settings .maven/settings.xml -DskipMunitTests \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
+
+  Deploy_to_DEV:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev'
+    needs: Publish_to_Exchange
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_HUB_TOKEN }}
+
+      - name: Pull latest committed version
+        run: git pull origin dev
+
+      - name: Log deploying version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Deploying version: $VERSION"
+
+      - name: Build and Deploy to DEV
+        run: |
+          mvn clean deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
+            -Dclient.id="${{ secrets.DEV_CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.DEV_CONNECTED_APP_CLIENT_SECRET }}" \
+            -DcloudhubEnvironment="${{ vars.DEV_CLOUDHUBENVIRONMENT }}" \
+            -Dtarget="${{ vars.DEV_TARGET }}" \
+            -Denv="${{ vars.DEV_ENV }}" \
+            -Dkey="${{ vars.DEV_KEY }}"
+
+  Deploy_to_UAT:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'qa'
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_HUB_TOKEN }}
+
+      - name: Pull latest committed version
+        run: git pull origin qa
+
+      - name: Log deploying version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Deploying version: $VERSION"
+
+      - name: Build and Deploy to UAT
+        run: |
+          mvn clean deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
+            -Dclient.id="${{ secrets.UAT_CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.UAT_CONNECTED_APP_CLIENT_SECRET }}" \
+            -DcloudhubEnvironment="${{ vars.UAT_CLOUDHUBENVIRONMENT }}" \
+            -Dtarget="${{ vars.UAT_TARGET }}" \
+            -Denv="${{ vars.UAT_ENV }}" \
+            -Dkey="${{ vars.UAT_KEY }}"
+
+  Deploy_to_PROD:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_HUB_TOKEN }}
+
+      - name: Pull latest committed version
+        run: git pull origin main
+
+      - name: Log deploying version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Deploying version: $VERSION"
+
+      - name: Build and Deploy to PROD
+        run: |
+          mvn deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
+            -Dclient.id="${{ secrets.PROD_CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.PROD_CONNECTED_APP_CLIENT_SECRET }}" \
+            -DcloudhubEnvironment="${{ vars.PROD_CLOUDHUBENVIRONMENT }}" \
+            -Dtarget="${{ vars.PROD_TARGET }}" \
+            -Denv="${{ vars.PROD_ENV }}" \
+            -Dkey="${{ vars.PROD_KEY }}"

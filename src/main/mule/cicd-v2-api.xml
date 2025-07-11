@@ -24,9 +24,17 @@ output application/json
 ---
 {
 	"message": p("secure::encrypted.message"),
-	"date": (now() >> "IST" as TimeZone) as String {format: "yyyy-MMM-dd"},
+	"date": (now() >> "IST" as TimeZone) as String {format: "yyyy-MMMM-dd"},
 	"time": (now() >> "IST" as TimeZone) as String {format: "HH:mm:ss"}
 }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="8ca132e0-9b6b-4792-84cf-d6bc27e6f74f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="0367315c-5c18-49da-a4a5-55f8aaabe6b6" message="#[payload]"/>
