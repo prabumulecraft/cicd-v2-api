@@ -26,7 +26,8 @@ output application/json
 	"message": p("secure::encrypted.message"),
 	"date": (now() >> "IST" as TimeZone) as String {format: "yyyy-MMMM-dd"},
 	"time": (now() >> "IST" as TimeZone) as String {format: "HH:mm:ss"},
-	"message2": "Hello there..!"
+	"message2": "Hello there..!",
+	"message3": "How are you..?"
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
