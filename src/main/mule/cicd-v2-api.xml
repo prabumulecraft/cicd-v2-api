@@ -52,6 +52,7 @@ output application/json
 "Deployed Successfully"]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="ef24205f-0900-4c60-a6d5-7cbae890e67b" message="#[payload]"/>
 			</otherwise>
 		</choice>
 	</flow>
