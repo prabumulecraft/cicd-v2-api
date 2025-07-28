@@ -33,11 +33,35 @@ jobs:
           java-version: 17
 
       - name: Rollback to ${{ github.event.inputs.version_tag }}
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          CLIENT_ID: ${{ secrets.DEV_CONNECTED_APP_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.DEV_CONNECTED_APP_CLIENT_SECRET }}
+          CLOUDHUB_ENV: ${{ vars.DEV_CLOUDHUBENVIRONMENT }}
+          TARGET: ${{ vars.DEV_TARGET }}
+          ENV_NAME: ${{ vars.DEV_ENV }}
+          KEY: ${{ vars.DEV_KEY }}
         run: |
+          if [[ "$ENV" == "uat" ]]; then
+            CLIENT_ID="${{ secrets.UAT_CONNECTED_APP_CLIENT_ID }}"
+            CLIENT_SECRET="${{ secrets.UAT_CONNECTED_APP_CLIENT_SECRET }}"
+            CLOUDHUB_ENV="${{ vars.UAT_CLOUDHUBENVIRONMENT }}"
+            TARGET="${{ vars.UAT_TARGET }}"
+            ENV_NAME="${{ vars.UAT_ENV }}"
+            KEY="${{ vars.UAT_KEY }}"
+          elif [[ "$ENV" == "prod" ]]; then
+            CLIENT_ID="${{ secrets.PROD_CONNECTED_APP_CLIENT_ID }}"
+            CLIENT_SECRET="${{ secrets.PROD_CONNECTED_APP_CLIENT_SECRET }}"
+            CLOUDHUB_ENV="${{ vars.PROD_CLOUDHUBENVIRONMENT }}"
+            TARGET="${{ vars.PROD_TARGET }}"
+            ENV_NAME="${{ vars.PROD_ENV }}"
+            KEY="${{ vars.PROD_KEY }}"
+          fi
+
           mvn clean deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
-            -Dclient.id="${{ secrets[format('{0}_CONNECTED_APP_CLIENT_ID', github.event.inputs.environment.toUpper())] }}" \
-            -Dclient.secret="${{ secrets[format('{0}_CONNECTED_APP_CLIENT_SECRET', github.event.inputs.environment.toUpper())] }}" \
-            -DcloudhubEnvironment="${{ vars[format('{0}_CLOUDHUBENVIRONMENT', github.event.inputs.environment.toUpper())] }}" \
-            -Dtarget="${{ vars[format('{0}_TARGET', github.event.inputs.environment.toUpper())] }}" \
-            -Denv="${{ vars[format('{0}_ENV', github.event.inputs.environment.toUpper())] }}" \
-            -Dkey="${{ vars[format('{0}_KEY', github.event.inputs.environment.toUpper())] }}"
+            -Dclient.id="$CLIENT_ID" \
+            -Dclient.secret="$CLIENT_SECRET" \
+            -DcloudhubEnvironment="$CLOUDHUB_ENV" \
+            -Dtarget="$TARGET" \
+            -Denv="$ENV_NAME" \
+            -Dkey="$KEY"
