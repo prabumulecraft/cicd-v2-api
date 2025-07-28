@@ -19,6 +19,9 @@ jobs:
   rollback:
     name: Rollback to ${{ github.event.inputs.version_tag }}
     runs-on: ubuntu-latest
+    env:
+      ENV: ${{ github.event.inputs.environment }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -32,17 +35,17 @@ jobs:
           distribution: "zulu"
           java-version: 17
 
-      - name: Rollback to ${{ github.event.inputs.version_tag }}
-        env:
-          ENV: ${{ github.event.inputs.environment }}
-          CLIENT_ID: ${{ secrets.DEV_CONNECTED_APP_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.DEV_CONNECTED_APP_CLIENT_SECRET }}
-          CLOUDHUB_ENV: ${{ vars.DEV_CLOUDHUBENVIRONMENT }}
-          TARGET: ${{ vars.DEV_TARGET }}
-          ENV_NAME: ${{ vars.DEV_ENV }}
-          KEY: ${{ vars.DEV_KEY }}
+      - name: Set and Validate Environment Variables
+        id: set-vars
         run: |
-          if [[ "$ENV" == "uat" ]]; then
+          if [[ "$ENV" == "dev" ]]; then
+            CLIENT_ID="${{ secrets.DEV_CONNECTED_APP_CLIENT_ID }}"
+            CLIENT_SECRET="${{ secrets.DEV_CONNECTED_APP_CLIENT_SECRET }}"
+            CLOUDHUB_ENV="${{ vars.DEV_CLOUDHUBENVIRONMENT }}"
+            TARGET="${{ vars.DEV_TARGET }}"
+            ENV_NAME="${{ vars.DEV_ENV }}"
+            KEY="${{ vars.DEV_KEY }}"
+          elif [[ "$ENV" == "uat" ]]; then
             CLIENT_ID="${{ secrets.UAT_CONNECTED_APP_CLIENT_ID }}"
             CLIENT_SECRET="${{ secrets.UAT_CONNECTED_APP_CLIENT_SECRET }}"
             CLOUDHUB_ENV="${{ vars.UAT_CLOUDHUBENVIRONMENT }}"
@@ -56,12 +59,36 @@ jobs:
             TARGET="${{ vars.PROD_TARGET }}"
             ENV_NAME="${{ vars.PROD_ENV }}"
             KEY="${{ vars.PROD_KEY }}"
+          else
+            echo "❌ Invalid environment: $ENV"
+            exit 1
           fi
 
+          # Validation
+          if [[ -z "$TARGET" || -z "$CLIENT_ID" || -z "$CLIENT_SECRET" || -z "$CLOUDHUB_ENV" || -z "$ENV_NAME" || -z "$KEY" ]]; then
+            echo "❌ One or more required environment values are missing!"
+            echo "TARGET=$TARGET"
+            echo "CLIENT_ID=$CLIENT_ID"
+            echo "CLIENT_SECRET=${#CLIENT_SECRET}"
+            echo "CLOUDHUB_ENV=$CLOUDHUB_ENV"
+            echo "ENV_NAME=$ENV_NAME"
+            echo "KEY=${#KEY}"
+            exit 1
+          fi
+
+          echo "client_id=$CLIENT_ID" >> $GITHUB_ENV
+          echo "client_secret=$CLIENT_SECRET" >> $GITHUB_ENV
+          echo "cloudhub_env=$CLOUDHUB_ENV" >> $GITHUB_ENV
+          echo "target=$TARGET" >> $GITHUB_ENV
+          echo "env_name=$ENV_NAME" >> $GITHUB_ENV
+          echo "key=$KEY" >> $GITHUB_ENV
+
+      - name: Deploy Rollback Version
+        run: |
           mvn clean deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
-            -Dclient.id="$CLIENT_ID" \
-            -Dclient.secret="$CLIENT_SECRET" \
-            -DcloudhubEnvironment="$CLOUDHUB_ENV" \
-            -Dtarget="$TARGET" \
-            -Denv="$ENV_NAME" \
-            -Dkey="$KEY"
+            -Dclient.id="$client_id" \
+            -Dclient.secret="$client_secret" \
+            -DcloudhubEnvironment="$cloudhub_env" \
+            -Dtarget="$target" \
+            -Denv="$env_name" \
+            -Dkey="$key"
