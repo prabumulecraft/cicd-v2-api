@@ -19,8 +19,6 @@ jobs:
   rollback:
     name: Rollback to ${{ github.event.inputs.version_tag }}
     runs-on: ubuntu-latest
-    env:
-      ENV: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout Code
@@ -35,53 +33,51 @@ jobs:
           distribution: "zulu"
           java-version: 17
 
-      - name: Set and Validate Environment Variables
-        id: set-vars
+      # Set dev variables
+      - name: Set Dev Env Vars
+        if: ${{ github.event.inputs.environment == 'dev' }}
         run: |
-          if [[ "$ENV" == "dev" ]]; then
-            CLIENT_ID="${{ secrets.DEV_CONNECTED_APP_CLIENT_ID }}"
-            CLIENT_SECRET="${{ secrets.DEV_CONNECTED_APP_CLIENT_SECRET }}"
-            CLOUDHUB_ENV="${{ vars.DEV_CLOUDHUBENVIRONMENT }}"
-            TARGET="${{ vars.DEV_TARGET }}"
-            ENV_NAME="${{ vars.DEV_ENV }}"
-            KEY="${{ vars.DEV_KEY }}"
-          elif [[ "$ENV" == "uat" ]]; then
-            CLIENT_ID="${{ secrets.UAT_CONNECTED_APP_CLIENT_ID }}"
-            CLIENT_SECRET="${{ secrets.UAT_CONNECTED_APP_CLIENT_SECRET }}"
-            CLOUDHUB_ENV="${{ vars.UAT_CLOUDHUBENVIRONMENT }}"
-            TARGET="${{ vars.UAT_TARGET }}"
-            ENV_NAME="${{ vars.UAT_ENV }}"
-            KEY="${{ vars.UAT_KEY }}"
-          elif [[ "$ENV" == "prod" ]]; then
-            CLIENT_ID="${{ secrets.PROD_CONNECTED_APP_CLIENT_ID }}"
-            CLIENT_SECRET="${{ secrets.PROD_CONNECTED_APP_CLIENT_SECRET }}"
-            CLOUDHUB_ENV="${{ vars.PROD_CLOUDHUBENVIRONMENT }}"
-            TARGET="${{ vars.PROD_TARGET }}"
-            ENV_NAME="${{ vars.PROD_ENV }}"
-            KEY="${{ vars.PROD_KEY }}"
-          else
-            echo "❌ Invalid environment: $ENV"
-            exit 1
-          fi
+          echo "client_id=${{ secrets.DEV_CONNECTED_APP_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "client_secret=${{ secrets.DEV_CONNECTED_APP_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "cloudhub_env=${{ vars.DEV_CLOUDHUBENVIRONMENT }}" >> $GITHUB_ENV
+          echo "target=${{ vars.DEV_TARGET }}" >> $GITHUB_ENV
+          echo "env_name=${{ vars.DEV_ENV }}" >> $GITHUB_ENV
+          echo "key=${{ vars.DEV_KEY }}" >> $GITHUB_ENV
 
-          # Validation
-          if [[ -z "$TARGET" || -z "$CLIENT_ID" || -z "$CLIENT_SECRET" || -z "$CLOUDHUB_ENV" || -z "$ENV_NAME" || -z "$KEY" ]]; then
+      # Set UAT variables
+      - name: Set UAT Env Vars
+        if: ${{ github.event.inputs.environment == 'uat' }}
+        run: |
+          echo "client_id=${{ secrets.UAT_CONNECTED_APP_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "client_secret=${{ secrets.UAT_CONNECTED_APP_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "cloudhub_env=${{ vars.UAT_CLOUDHUBENVIRONMENT }}" >> $GITHUB_ENV
+          echo "target=${{ vars.UAT_TARGET }}" >> $GITHUB_ENV
+          echo "env_name=${{ vars.UAT_ENV }}" >> $GITHUB_ENV
+          echo "key=${{ vars.UAT_KEY }}" >> $GITHUB_ENV
+
+      # Set PROD variables
+      - name: Set PROD Env Vars
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        run: |
+          echo "client_id=${{ secrets.PROD_CONNECTED_APP_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "client_secret=${{ secrets.PROD_CONNECTED_APP_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "cloudhub_env=${{ vars.PROD_CLOUDHUBENVIRONMENT }}" >> $GITHUB_ENV
+          echo "target=${{ vars.PROD_TARGET }}" >> $GITHUB_ENV
+          echo "env_name=${{ vars.PROD_ENV }}" >> $GITHUB_ENV
+          echo "key=${{ vars.PROD_KEY }}" >> $GITHUB_ENV
+
+      - name: Validate Required Variables
+        run: |
+          if [[ -z "$target" || -z "$client_id" || -z "$client_secret" || -z "$cloudhub_env" || -z "$env_name" || -z "$key" ]]; then
             echo "❌ One or more required environment values are missing!"
-            echo "TARGET=$TARGET"
-            echo "CLIENT_ID=$CLIENT_ID"
-            echo "CLIENT_SECRET=${#CLIENT_SECRET}"
-            echo "CLOUDHUB_ENV=$CLOUDHUB_ENV"
-            echo "ENV_NAME=$ENV_NAME"
-            echo "KEY=${#KEY}"
+            echo "target=$target"
+            echo "client_id=$client_id"
+            echo "client_secret=${#client_secret}"
+            echo "cloudhub_env=$cloudhub_env"
+            echo "env_name=$env_name"
+            echo "key=${#key}"
             exit 1
           fi
-
-          echo "client_id=$CLIENT_ID" >> $GITHUB_ENV
-          echo "client_secret=$CLIENT_SECRET" >> $GITHUB_ENV
-          echo "cloudhub_env=$CLOUDHUB_ENV" >> $GITHUB_ENV
-          echo "target=$TARGET" >> $GITHUB_ENV
-          echo "env_name=$ENV_NAME" >> $GITHUB_ENV
-          echo "key=$KEY" >> $GITHUB_ENV
 
       - name: Deploy Rollback Version
         run: |
