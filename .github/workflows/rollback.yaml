@@ -35,9 +35,9 @@ jobs:
       - name: Rollback to ${{ github.event.inputs.version_tag }}
         run: |
           mvn clean deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
-            -Dclient.id="${{ secrets[format('{0}_CONNECTED_APP_CLIENT_ID', github.event.inputs.environment | upper)] }}" \
-            -Dclient.secret="${{ secrets[format('{0}_CONNECTED_APP_CLIENT_SECRET', github.event.inputs.environment | upper)] }}" \
-            -DcloudhubEnvironment="${{ vars[format('{0}_CLOUDHUBENVIRONMENT', github.event.inputs.environment | upper)] }}" \
-            -Dtarget="${{ vars[format('{0}_TARGET', github.event.inputs.environment | upper)] }}" \
-            -Denv="${{ vars[format('{0}_ENV', github.event.inputs.environment | upper)] }}" \
-            -Dkey="${{ vars[format('{0}_KEY', github.event.inputs.environment | upper)] }}"
+            -Dclient.id="${{ secrets[format('{0}_CONNECTED_APP_CLIENT_ID', github.event.inputs.environment.toUpper())] }}" \
+            -Dclient.secret="${{ secrets[format('{0}_CONNECTED_APP_CLIENT_SECRET', github.event.inputs.environment.toUpper())] }}" \
+            -DcloudhubEnvironment="${{ vars[format('{0}_CLOUDHUBENVIRONMENT', github.event.inputs.environment.toUpper())] }}" \
+            -Dtarget="${{ vars[format('{0}_TARGET', github.event.inputs.environment.toUpper())] }}" \
+            -Denv="${{ vars[format('{0}_ENV', github.event.inputs.environment.toUpper())] }}" \
+            -Dkey="${{ vars[format('{0}_KEY', github.event.inputs.environment.toUpper())] }}"
