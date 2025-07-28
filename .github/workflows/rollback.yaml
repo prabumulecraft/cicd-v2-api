@@ -69,10 +69,10 @@ jobs:
             echo "❌ One or more required environment values are missing!"
             echo "target=${{ env.target }}"
             echo "client_id=${{ env.client_id }}"
-            echo "client_secret=${#env.client_secret}"
+            echo "client_secret=${env.client_secret}"
             echo "cloudhub_env=${{ env.cloudhub_env }}"
             echo "env_name=${{ env.env_name }}"
-            echo "key=${#env.key}"
+            echo "key=${env.key}"
             exit 1
           fi
 
