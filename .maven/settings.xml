@@ -7,8 +7,8 @@
   <servers>
     <server>
       <id>MuleRepository</id>
-      <username>vpplc.nexus</username>
-      <password>ra9f4N6rHbArooU</password>
+      <username>Lanesgroup.nexus</username>
+      <password>mf9hllkVjmTpCXT</password>
     </server>
     <server>
       <id>Repository</id>
