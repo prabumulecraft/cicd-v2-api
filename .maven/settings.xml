@@ -1,11 +1,15 @@
-<?xml version="1.0"?>
-<settings>
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-  <pluginGroups>
-    <pluginGroup>org.mule.tools</pluginGroup>
-  </pluginGroups>
-
+  <!-- Authentication for private repositories -->
   <servers>
+    <server>
+      <id>MuleRepository</id>
+      <username>vpplc.nexus</username>
+      <password>ra9f4N6rHbArooU</password>
+    </server>
     <server>
       <id>Repository</id>
       <username>~~~Client~~~</username>
@@ -13,4 +17,81 @@
     </server>
   </servers>
 
+  <!-- Allow Mule Maven Plugin without full coordinates -->
+  <pluginGroups>
+    <pluginGroup>org.mule.tools</pluginGroup>
+  </pluginGroups>
+
+  <profiles>
+    <profile>
+      <id>Mule</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <!-- Optional: store orgId/groupId as a property -->
+      <properties>
+        <global.anypoint.groupId>3a59c5c1-c282-4c9d-b6c2-f94c4d56d364</global.anypoint.groupId>
+      </properties>
+
+      <repositories>
+        <!-- Maven Central -->
+        <repository>
+          <id>central</id>
+          <url>https://repo1.maven.org/maven2</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+        </repository>
+
+        <!-- MuleSoft Enterprise Repository (EE) -->
+        <repository>
+          <id>MuleRepository</id>
+          <name>Mule Enterprise Repository</name>
+          <url>https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+
+        <!-- MuleSoft Public Repository -->
+        <repository>
+          <id>mulesoft-public</id>
+          <name>MuleSoft Public Repository</name>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/public</url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>https://repo1.maven.org/maven2</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+        </pluginRepository>
+        <pluginRepository>
+          <id>mulesoft-public</id>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/public</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
 </settings>
