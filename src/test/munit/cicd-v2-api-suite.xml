@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="cicd-v2-api-suite.xml" />
+	<munit:test name="test-cicd-projectFlow-test" doc:id="0c631029-cd7a-48e5-b9d8-8ffd0f058ed9" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="0efd0be0-fb47-433f-b869-ceeb12b95639" >
+				<munit:payload value="#[readUrl('classpath://testcicdprojectFlowtest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://testcicdprojectFlowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to test-cicd-projectFlow" doc:id="826cf432-e3d9-40b9-a09a-3a367ebeb4fa" name="test-cicd-projectFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="8caeab02-a7a7-4de2-8a73-1ebb8c168199" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import testcicdprojectFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Transform Message" doc:id="fe0aa5b6-875a-4571-8043-ea90b0ce5b30" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="58dd3d70-f34a-49ee-b03e-c330b5a7c838" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Verify Logger" doc:id="a1d9695f-5e01-495d-9260-d072015a53a2" processor="logger" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ef24205f-0900-4c60-a6d5-7cbae890e67b" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
