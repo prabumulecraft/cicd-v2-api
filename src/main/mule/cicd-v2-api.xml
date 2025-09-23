@@ -13,8 +13,8 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	</http:listener-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="2430d4fb-176d-42e2-9834-157c9cc51254" file="properties/${env}.yaml" />
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="affde96a-65d5-451c-a7d4-2451037ea8f3" file="properties/${env}.yaml" key="${key}" />
-	<global-property doc:name="Global Property" doc:id="ce1297dc-a3f5-455b-8bbf-849f641d2658" name="env" value="${env}" />
-	<global-property doc:name="Global Property" doc:id="98e4812a-c7a1-4b2f-abdb-0023f2b67b91" name="key" value="${key}" />
+	<global-property doc:name="Global Property" doc:id="ce1297dc-a3f5-455b-8bbf-849f641d2658" name="env" value="dev" />
+	<global-property doc:name="Global Property" doc:id="98e4812a-c7a1-4b2f-abdb-0023f2b67b91" name="key" value="Fp2q2bPLKOBE1vJO" />
 	<flow name="test-cicd-projectFlow" doc:id="13808b26-c85b-4f44-bf66-dbc309bcb3c8" >
 		<http:listener doc:name="Listener" doc:id="4e9cf6ab-1443-419c-b388-b564035b2252" config-ref="HTTP_Listener_config" path="/api"/>
 		<choice doc:name="Choice" doc:id="c1e570f3-d3f2-4951-98d8-4627f47e74ac" >
